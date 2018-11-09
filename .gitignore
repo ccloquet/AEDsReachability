@@ -1,2 +1,5 @@
 
 *.html~
+*.js~
+real_params.js
+*.swp
