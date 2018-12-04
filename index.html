@@ -1,11 +1,11 @@
 <html> 
 <head>
 	<meta charset="UTF-8">
+	<link rel="stylesheet" href="https://unpkg.com/font-awesome@4.7.0/css/font-awesome.min.css">
 	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" 	integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" 	crossorigin=""/>
 	<script src="https://code.jquery.com/jquery-3.3.1.min.js" 			integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" 						crossorigin="anonymous"></script>
 	<script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js" 			integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA=="   	crossorigin=""></script>
-	<script src="params.js?a=2" 																						      ></script>
-
+	
 	<style>
 		body
 		{	
@@ -23,31 +23,32 @@
 	</style>
 </head>
 <body>
-	<h1>AED <span id="timespan">3</span> MIN REACHABILITY MAP – DEMO NOT FOR REAL USE. HELP MAPPING! <a target='_blank' href='https://www.openstreetmap.org'>WEB</a> / <a target='_blank' href='https://play.google.com/store/apps/details?id=io.mapsquare.osmcontributor&hl=fr'>APP</a></h1>
+	<h1>AED <span id="timespan">3</span> MIN REACHABILITY MAP – DEMO NOT FOR REAL USE. HELP MAPPING! <a target='_blank' href='https://www.openstreetmap.org'>WEB</a> / <a target='_blank' href='https://play.google.com/store/apps/details?id=io.mapsquare.osmcontributor&hl=fr'>APP</a>&nbsp;<i id='spin' style='display:none' class='fa fa-spin fa-spinner'></i></h1>
 	<div id="mapid"></div>
 </body>
 
 <script>
-
-	//overpass API query
-	var data_url = 'https://overpass-api.de/api/interpreter?data=%2F*%0AThis%20has%20been%20generated%20by%20the%20overpass-turbo%20wizard.%0AThe%20original%20search%20was%3A%0A%E2%80%9Cemergency%3Ddefibrillator%E2%80%9D%0A*%2F%0A%5Bout%3Ajson%5D%5Btimeout%3A25%5D%3B%0A%2F%2F%20gather%20results%0A%28%0A%20%20%2F%2F%20query%20part%20for%3A%20%E2%80%9Cemergency%3Ddefibrillator%E2%80%9D%0A%20%20node%5B%22emergency%22%3D%22defibrillator%22%5D%2850.7942172837094%2C4.255313873291016%2C50.89447985118614%2C4.497356414794922%29%3B%0A%20%20way%5B%22emergency%22%3D%22defibrillator%22%5D%2850.7942172837094%2C4.255313873291016%2C50.89447985118614%2C4.497356414794922%29%3B%0A%20%20relation%5B%22emergency%22%3D%22defibrillator%22%5D%2850.7942172837094%2C4.255313873291016%2C50.89447985118614%2C4.497356414794922%29%3B%0A%29%3B%0A%2F%2F%20print%20results%0Aout%20body%3B%0A%3E%3B%0Aout%20skel%20qt%3B'; 
-	// if no Mapbox key => use the iso4App demo... but will not load an isochrone for each point...
-	if (mapboxAccessToken == null)
-	{
-		$('#timespan').text(10)
-	}
 
 	// initializes map
 	var mymap = L.map('mapid').setView([50.84, 4.36], 13);
 
 	L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', 
 	{
-		attribution: 	'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+		attribution: 	'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>.<br>2010 Population density: http://sedac.ciesin.columbia.edu/maps/services',
 		maxZoom: 	18,
-		zoom:		11
+		zoom:		12
 	}).addTo(mymap);
 
-	mymap.setZoom(12)
+	/*L.tileLayer('https://cartocdn-gusc.global.ssl.fastly.net/duncansmith/api/v1/map/6448b3e05b1f0afbd28f9a9ed45019fc:1523283294850/0,1,2/{z}/{x}/{y}.png', 
+	{
+		attribution: 	'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>.<br>Population density: http://sedac.ciesin.columbia.edu/maps/services',
+		maxZoom: 	18,
+		zoom:		12
+	}).addTo(mymap);*/
+
+	var wmsLayer = L.tileLayer.wms('http://sedac.ciesin.columbia.edu/geoserver/wms?', {layers:'gpw-v3:gpw-v3-population-density_2000', opacity :.25, attribution:'r'}).addTo(mymap);
+
+	L.control.scale().addTo(mymap);
 
 	// style for the isochrones
 	var myStyle = {
@@ -57,44 +58,30 @@
 	};
 
 	// get the AED data
-	$.get(data_url, function(e)
+	$('#spin').fadeIn()
+	$.get('get_data.php?a='+Math.random(),  
+	function(e)
 	{
+		$('#spin').fadeOut()
+
 		var data = e.elements
+		var isolines = e.areas
 
 		// renders the AED data
 		for (var i=0; i<data.length; ++i)
 		{
-			var marker = L.circleMarker([data[i].lat, data[i].lon], {radius:3,color:'red',fillColor:'red',opacity:1}).addTo(mymap);
-
-			// get the isochrone associated with the current point
-			$.get( isoline_url(data[i].lat, data[i].lon),
-			function(e)
+			if ( (data[i].lat==null) | (data[i].lon == null ))
 			{
-				console.log(e)
-				L.geoJSON(e, {style: myStyle}).addTo(mymap);
-			}, 'json');
-		}
-	})
+				continue;
+			}
 
-	function isoline_url(lat, lng)
-	{
-		if (mapboxAccessToken != null)
-		{
-			return "https://api.mapbox.com/isochrone/v1/mapbox/walking/"+lng+","+lat+"?contours_minutes=3&contours_colors=6706ce,04e813,4286f4&polygons=true&access_token=" + mapboxAccessToken
+			L.circleMarker([data[i].lat, data[i].lon], {radius:3,color:'red',fillColor:'red',opacity:1}).addTo(mymap);
+			L.geoJSON(isolines[i], {style: myStyle}).addTo(mymap);	// isochrone
 		}
-		else
-		{
-			return 'https://www.iso4app.net/rest/1.3/isoline.geojson?licKey=87B7FB96-83DA-4FBD-A312-7822B96BB143'
-			+'&type=isochrone'
-			+'&value=600'	// seconds
-			+'&lat=' + lat +'&lng=' + lng
-			+'&approx=50&mobility=pedestrian&speedType=normal&reduceQueue=false&avoidTolls=true&restrictedAreas=false&fastestRouting=true&concavity=6&buffering=3&reqId=A57X';
-		}
-	}
+		
+	}, 'json')
 
 	// then...
-	// cache the AED data	-> mechanism similar as STIB cache, to avoid a cron
-	// cache the isochrones, Eg mapbox API : max 300 requests/min
 	// do not use the OSM community server
 	// keep it simple...
 	// ...

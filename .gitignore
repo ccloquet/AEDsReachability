@@ -4,3 +4,5 @@
 real_params.js
 *.swp
 *.md~
+*.php~
+real_params.php
