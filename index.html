@@ -3,8 +3,11 @@
 	<meta charset="UTF-8">
 	<link rel="stylesheet" href="https://unpkg.com/font-awesome@4.7.0/css/font-awesome.min.css">
 	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" 	integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" 	crossorigin=""/>
-	<script src="https://code.jquery.com/jquery-3.3.1.min.js" 			integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" 						crossorigin="anonymous"></script>
-	<script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js" 			integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA=="   	crossorigin=""></script>
+	<link rel="stylesheet" href="leaflet.photon-0.8.0/leaflet.photon.css">
+
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js" 			integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" 						crossorigin="anonymous"	></script>
+	<script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js" 			integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA=="   	crossorigin=""		></script>
+	<script src="leaflet.photon-0.8.0/leaflet.photon.js" 		 																			></script>
 	
 	<style>
 		body
@@ -20,10 +23,52 @@
 		{
 			color:	white;
 		}
+
+		.leaflet-popup-content
+		{
+			font-size: 150%;
+		}
+
+		.photon-input
+		{
+			font-size: 200%;
+		}
+
+		.blink_me
+		{
+			animation: blinker 3s ease infinite;
+		}
+
+		a
+		{
+			text-decoration:none;
+			color:white
+		}
+		a:hover
+		{
+			color:yellow
+		}
+
+		.my-div-icon
+		{
+			background:	rgba(255,255,255,.85);
+			padding:	5px 0 7px 0;
+			font-weight:	bold;
+			width:		50px!important;
+			margin-top:	20px!important;
+			margin-left:	-20px!important;
+			text-align:	center;
+			border-radius:	5px;
+		}
+		@keyframes blinker 
+		{
+		  50% { opacity: 0;  }
+		}
 	</style>
 </head>
 <body>
-	<h1>AED <span id="timespan">3</span> MIN REACHABILITY MAP – DEMO NOT FOR REAL USE. HELP MAPPING! <a target='_blank' href='https://www.openstreetmap.org'>WEB</a> / <a target='_blank' href='https://play.google.com/store/apps/details?id=io.mapsquare.osmcontributor&hl=fr'>APP</a>&nbsp;<i id='spin' style='display:none' class='fa fa-spin fa-spinner'></i></h1>
+	<h1><span style='color:orange'>AED <span id="timespan">3</span> MINUTES MAP.</span> <span style='float:right'>👉 HELP MAPPING: <a href='mailto:?subject=AED suggestion&body=I found an AED at this location:'>✉</a> | <a target='_blank' href='https://www.openstreetmap.org'>WEB</a> | <a target='_blank' href='https://play.google.com/store/apps/details?id=io.mapsquare.osmcontributor&hl=fr'>APP</a>&nbsp;<i id='spin' style='display:none' class='fa fa-spin fa-spinner'></i></span></h1>
+	<div style='font-size:small;color:white;margin-top:-.75em;margin-bottom:.5em'><i>DEMO NOT FOR REAL USE</i></div>
 	<div id="mapid"></div>
 </body>
 
@@ -31,10 +76,11 @@
 
 	// initializes map
 	var mymap = L.map('mapid').setView([50.84, 4.36], 13);
+	var data  = null;
 
 	L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', 
 	{
-		attribution: 	'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>.<br>2010 Population density: http://sedac.ciesin.columbia.edu/maps/services',
+		attribution: 	'Map data &copy; <a target="_blank" href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a target="_blank" href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>.<br><!--2010 Population density: http://sedac.ciesin.columbia.edu/maps/services-->Adress search: <a target="_blank" href="https://github.com/komoot/leaflet.photon">Leaflet Photon</a> under <a target="_blank" href="https://github.com/komoot/leaflet.photon/blob/master/LICENSE">Apache 2.0 Licence</a>',
 		maxZoom: 	18,
 		zoom:		12
 	}).addTo(mymap);
@@ -46,15 +92,67 @@
 		zoom:		12
 	}).addTo(mymap);*/
 
-	var wmsLayer = L.tileLayer.wms('http://sedac.ciesin.columbia.edu/geoserver/wms?', {layers:'gpw-v3:gpw-v3-population-density_2000', opacity :.25, attribution:'r'}).addTo(mymap);
+	//var wmsLayer = L.tileLayer.wms('http://sedac.ciesin.columbia.edu/geoserver/wms?', {layers:'gpw-v3:gpw-v3-population-density_2000', opacity :.25, attribution:'r'}).addTo(mymap);
 
 	L.control.scale().addTo(mymap);
+
+	var photonControlOptions=
+	{
+	      onSelected: 	photonHandler,
+	      placeholder: 	'adress',
+	      position: 	'topright'
+	}
+
+	function photonHandler(e)
+	{		
+		var coords = e.geometry.coordinates;
+
+		L.circleMarker([coords[1], coords[0]], {radius:20, color:'red', fillColor:'red', weight:8}).addTo(mymap)
+		// data : look for the nearest
+		var candidates = [ [coords[1], coords[0]] ]
+		for (var i=0; i<data.length; ++i)
+		{
+			if (data[i] == null) 						continue;
+			if (data[i].type !== 'node') 					continue; 
+			if ( (data[i].lat == null) | (data[i].lon == null ) )		continue;
+
+			//console.log(data[i], [coords[1], coords[0]], [data[i].lat, data[i].lon]);
+			var d = mymap.distance([coords[1], coords[0]], [data[i].lat, data[i].lon]);
+
+			if (d < 750)
+			{
+				candidates.push(data[i]);
+				L.circleMarker([data[i].lat, data[i].lon], {radius:20, color:'green', fill:false, weight:8}).addTo(mymap)
+				var myIcon = L.divIcon({className: 'my-div-icon', html:Math.round(d) + ' m'});
+				
+				L.marker([data[i].lat, data[i].lon], {icon: myIcon}).addTo(mymap);
+			}
+		}
+		console.log(candidates)
+		if (candidates.length > 1)	
+		{
+			console.log('e')
+			mymap.flyToBounds(L.polygon(candidates).getBounds())
+			/*for (var i=0; i<candidates.length; ++i)
+			{
+				// routing -> calculer le + proche
+				// mais plus compliqué que ça, car un DEA un peu plus loin, mais failement accessible sera mieux qu'un plus proche mis compliqué à trouver
+			}*/
+		}
+		else
+		{
+			mymap.flyTo([coords[1], coords[0]], 15);
+		}
+		
+	}
+  
+	L.control.photon(photonControlOptions).addTo(mymap);
 
 	// style for the isochrones
 	var myStyle = {
 	    "color": 		"#00BB00",
 	    "weight": 		2,
-	    "fillOpacity": 	0.5
+	    "fillOpacity": 	0.2
 	};
 
 	// get the AED data
@@ -64,19 +162,28 @@
 	{
 		$('#spin').fadeOut()
 
-		var data = e.elements
+		data     = e.elements
 		var isolines = e.areas
 
 		// renders the AED data
 		for (var i=0; i<data.length; ++i)
 		{
-			if ( (data[i].lat==null) | (data[i].lon == null ))
+			if ( (data[i].lat == null) | (data[i].lon == null ) )
 			{
 				continue;
 			}
 
-			L.circleMarker([data[i].lat, data[i].lon], {radius:3,color:'red',fillColor:'red',opacity:1}).addTo(mymap);
 			L.geoJSON(isolines[i], {style: myStyle}).addTo(mymap);	// isochrone
+
+			var popup_content = ''
+
+			for (tag in data[i].tags)
+			{
+				if (!data[i].tags.hasOwnProperty(tag))	continue;
+				popup_content += '<b>' + tag + '</b>:' + data[i].tags[tag] + '<br>'
+			}
+
+			L.circleMarker([data[i].lat, data[i].lon], {radius:3,color:'red',fillColor:'red',opacity:1}).bindPopup(popup_content).addTo(mymap);
 		}
 		
 	}, 'json')
