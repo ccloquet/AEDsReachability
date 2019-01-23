@@ -1,5 +1,5 @@
 # aeds_reachability
-Reachability of the AEDs (data source = OSM)
+Map of the reachability of the AEDs in Brussels (data source=OSM)
 
 Demo for Brussels
 
