@@ -1,5 +1,5 @@
 # aeds_reachability
-Map of the reachability of the AEDs (data source=OSM)
+Interactve map of the reachability of the AEDs (data source=OSM)
 
 Demo for Brussels: http://aed.my-poppy.eu/
 
