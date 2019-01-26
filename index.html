@@ -1,6 +1,9 @@
 <html> 
+
 <head>
 	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width,userscalable=no">
+
 	<link rel="stylesheet" href="https://unpkg.com/font-awesome@4.7.0/css/font-awesome.min.css">
 	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" 	integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" 	crossorigin=""/>
 	<link rel="stylesheet" href="leaflet.photon-0.8.0/leaflet.photon.css">
@@ -17,7 +20,12 @@
 		}
 		#mapid
 		{
-			height: 90%;
+		 
+			position:fixed;
+			bottom:0;
+			left:0;
+			right:0;
+			top:10em;
 		}
 		h1
 		{
@@ -32,11 +40,8 @@
 		.photon-input
 		{
 			font-size: 200%;
-		}
-
-		.blink_me
-		{
-			animation: blinker 3s ease infinite;
+			/*max-width:250px;*/
+		 
 		}
 
 		a
@@ -51,36 +56,46 @@
 
 		.my-div-icon
 		{
-			background:	rgba(255,255,255,.85);
-			padding:	5px 0 7px 0;
-			font-weight:	bold;
+			background:	rgba(255,255,255,.90);
+			padding:	2px 0 5px 0;
 			width:		50px!important;
 			margin-top:	20px!important;
-			margin-left:	-20px!important;
+			margin-left:	-25px!important;
 			text-align:	center;
 			border-radius:	5px;
+			border: 1px solid black;
 		}
-		@keyframes blinker 
+
+		.my-logo-icon-bold
 		{
-		  50% { opacity: 0;  }
+			color:		darkblue;
+			text-align:	center;
+			text-shadow: 	-2px 0 white, 0 2px white, 2px 0 white, 0 -2px white;
+			width:		250px!important;
+			margin-top:	-20px!important;
+			margin-left:	-125px!important;
 		}
+	 
 	</style>
 </head>
 <body>
-	<h1><span style='color:orange'>AED <span id="timespan">3</span> MINUTES MAP.</span> <span style='float:right'>👉 HELP MAPPING: <a href='mailto:?subject=AED suggestion&body=I found an AED at this location:'>✉</a> | <a target='_blank' href='https://www.openstreetmap.org'>WEB</a> | <a target='_blank' href='https://play.google.com/store/apps/details?id=io.mapsquare.osmcontributor&hl=fr'>APP</a>&nbsp;<i id='spin' style='display:none' class='fa fa-spin fa-spinner'></i></span></h1>
-	<div style='font-size:small;color:white;margin-top:-.75em;margin-bottom:.5em'><i>DEMO NOT FOR REAL USE</i></div>
+	<div id='header'>
+	<h1><span style='color:orange'>PROBABLE AED <span id="timespan">2</span> MINUTES MAP.</span> <span style='float:right'>👉 HELP MAPPING: <a href='mailto:aed@my-poppy.eu?subject=AED suggestion&body=I found an AED at this location:'>✉</a> | <a target='_blank' href='https://www.openstreetmap.org'>WEB</a> | <a target='_blank' href='https://play.google.com/store/apps/details?id=io.mapsquare.osmcontributor&hl=fr'>APP</a>&nbsp;<i id='spin' style='display:none' class='fa fa-spin fa-spinner'></i></span></h1>
+	<div style='font-size:small;color:white;margin-top:-.75em;margin-bottom:.5em'><i><span>DEMO NOT FOR REAL USE - data coming from OSM & Interparking + OSM data for AXA & ING banks</span><span style='float:right'>Take also a look at an app such as <a href='https://aedmap.org/fr/protection-civile-bons-samaritains/'><b>AED-MAP</b></a></span></i></div>
+	</div>
 	<div id="mapid"></div>
 </body>
 
 <script>
-
+	$('#mapid').css('top', $('#header').height()+10);
 	// initializes map
-	var mymap = L.map('mapid').setView([50.84, 4.36], 13);
+	var mymap = L.map('mapid', { zoomControl: false }).setView([50.84, 4.36], 13);	
+	mymap.locate({setView : true});
 	var data  = null;
 
-	L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', 
+	var tL = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', 
 	{
-		attribution: 	'Map data &copy; <a target="_blank" href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a target="_blank" href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>.<br><!--2010 Population density: http://sedac.ciesin.columbia.edu/maps/services-->Adress search: <a target="_blank" href="https://github.com/komoot/leaflet.photon">Leaflet Photon</a> under <a target="_blank" href="https://github.com/komoot/leaflet.photon/blob/master/LICENSE">Apache 2.0 Licence</a>',
+		attribution: 	'Map data &copy; <a target="_blank" href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a target="_blank" href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>.<br><!--2010 Population density: http://sedac.ciesin.columbia.edu/maps/services-->Interparking (lic?), Basic-FIT (lic?)<br>Adress search: <a target="_blank" href="https://github.com/komoot/leaflet.photon">Leaflet Photon</a> under <a target="_blank" href="https://github.com/komoot/leaflet.photon/blob/master/LICENSE">Apache 2.0 Licence</a>',
 		maxZoom: 	18,
 		zoom:		12
 	}).addTo(mymap);
@@ -94,13 +109,20 @@
 
 	//var wmsLayer = L.tileLayer.wms('http://sedac.ciesin.columbia.edu/geoserver/wms?', {layers:'gpw-v3:gpw-v3-population-density_2000', opacity :.25, attribution:'r'}).addTo(mymap);
 
+	L.control.zoom({ position:'topright' }).addTo(mymap)
 	L.control.scale().addTo(mymap);
+
+	var 	fG = L.featureGroup(),
+		fH = L.featureGroup(),
+		fI = L.featureGroup()
+
+	L.control.layers({'OSM':tL}, {'2 minutes-areas':fG, 'locations':fH, 'names':fI}).addTo(mymap);
 
 	var photonControlOptions=
 	{
 	      onSelected: 	photonHandler,
 	      placeholder: 	'adress',
-	      position: 	'topright'
+	      position: 	'topleft'
 	}
 
 	function photonHandler(e)
@@ -119,12 +141,11 @@
 			//console.log(data[i], [coords[1], coords[0]], [data[i].lat, data[i].lon]);
 			var d = mymap.distance([coords[1], coords[0]], [data[i].lat, data[i].lon]);
 
-			if (d < 750)
+			if (d < 500)
 			{
 				candidates.push(data[i]);
 				L.circleMarker([data[i].lat, data[i].lon], {radius:20, color:'green', fill:false, weight:8}).addTo(mymap)
 				var myIcon = L.divIcon({className: 'my-div-icon', html:Math.round(d) + ' m'});
-				
 				L.marker([data[i].lat, data[i].lon], {icon: myIcon}).addTo(mymap);
 			}
 		}
@@ -143,6 +164,8 @@
 		{
 			mymap.flyTo([coords[1], coords[0]], 15);
 		}
+
+		mymap.removeLayer(fG)
 		
 	}
   
@@ -173,18 +196,34 @@
 				continue;
 			}
 
-			L.geoJSON(isolines[i], {style: myStyle}).addTo(mymap);	// isochrone
+			fG.addLayer(L.geoJSON(isolines[i], {style: myStyle}))	// isochrone
 
 			var popup_content = ''
-
+			
 			for (tag in data[i].tags)
 			{
 				if (!data[i].tags.hasOwnProperty(tag))	continue;
-				popup_content += '<b>' + tag + '</b>:' + data[i].tags[tag] + '<br>'
+				popup_content += '<b>' + escape(tag) + '</b>:' + escape(data[i].tags[tag]).replace(/%20/g,' ')  + '<br>'
 			}
 
-			L.circleMarker([data[i].lat, data[i].lon], {radius:3,color:'red',fillColor:'red',opacity:1}).bindPopup(popup_content).addTo(mymap);
+			fH.addLayer(L.circleMarker([data[i].lat, data[i].lon], {radius:3,color:'red',fillColor:'red',opacity:1}).bindPopup(popup_content))
+
+			if (data[i].tags != null)
+			{
+				var operator = data[i].tags.operator
+
+				if (operator != null) if (operator.trim() != '')
+				{
+					var myIcon = L.divIcon({className: 'my-logo-icon-bold', html:operator});
+				
+					fI.addLayer(L.marker([data[i].lat, data[i].lon], {icon: myIcon}).bindPopup(popup_content))
+				}
+			}
 		}
+
+		fG.addTo(mymap);
+		fH.addTo(mymap);
+		fI.addTo(mymap);
 		
 	}, 'json')
 
